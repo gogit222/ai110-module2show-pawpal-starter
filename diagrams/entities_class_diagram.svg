@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
+  <style>
+    .box { fill:#fff; stroke:#333; stroke-width:1.5; rx:6; }
+    .title { font: bold 14px / 18px Arial, Helvetica, sans-serif; }
+    .attr { font: 12px/16px Arial, Helvetica, sans-serif; }
+    .method { font: 12px/16px Arial, Helvetica, sans-serif; fill:#0645AD; }
+    .link { stroke:#444; stroke-width:1.2; marker-end: url(#arrow); }
+    .rel { font: italic 11px/14px Arial, Helvetica, sans-serif; fill:#555; }
+  </style>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444" />
+    </marker>
+  </defs>
+
+  <!-- Owner box -->
+  <rect class="box" x="40" y="40" width="420" height="220" />
+  <text class="title" x="60" y="64">Owner</text>
+  <text class="attr" x="60" y="90">owner_id : string</text>
+  <text class="attr" x="60" y="110">name : string</text>
+  <text class="attr" x="60" y="130">contact : Contact</text>
+  <text class="attr" x="60" y="150">availability : Availability[]</text>
+  <text class="attr" x="60" y="170">preferences : Preferences</text>
+  <text class="attr" x="60" y="190">location : Location</text>
+
+  <text class="title" x="60" y="216">Methods</text>
+  <text class="method" x="60" y="236">+ get_pets() : Pet[]</text>
+  <text class="method" x="60" y="256">+ get_upcoming_tasks(start, end)</text>
+
+  <!-- Scheduler box -->
+  <rect class="box" x="740" y="40" width="420" height="220" />
+  <text class="title" x="760" y="64">Scheduler</text>
+  <text class="attr" x="760" y="90">owner : Owner</text>
+  <text class="attr" x="760" y="110">tasks : Task[]</text>
+  <text class="attr" x="760" y="130">availability : Availability[]</text>
+  <text class="attr" x="760" y="150">slots : ScheduledSlot[]</text>
+
+  <text class="title" x="760" y="176">Methods</text>
+  <text class="method" x="760" y="196">+ load_tasks_from_owner() : Task[]</text>
+  <text class="method" x="760" y="216">+ prioritize() : Task[]</text>
+  <text class="method" x="760" y="236">+ resolve_conflicts(slots)</text>
+  <text class="method" x="760" y="256">+ generate_plan(start, end)</text>
+
+  <!-- Pet box -->
+  <rect class="box" x="40" y="320" width="420" height="280" />
+  <text class="title" x="60" y="344">Pet</text>
+  <text class="attr" x="60" y="370">pet_id : string</text>
+  <text class="attr" x="60" y="390">name : string</text>
+  <text class="attr" x="60" y="410">species : string</text>
+  <text class="attr" x="60" y="430">breed : string</text>
+  <text class="attr" x="60" y="450">activity_level : ActivityLevel</text>
+  <text class="attr" x="60" y="470">tasks : Task[]</text>
+
+  <text class="title" x="60" y="496">Methods</text>
+  <text class="method" x="60" y="516">+ add_task(task) / get_tasks()</text>
+  <text class="method" x="60" y="536">+ is_medication_due(now)</text>
+  <text class="method" x="60" y="556">+ next_feeding_time(now)</text>
+
+  <!-- Task box -->
+  <rect class="box" x="740" y="320" width="420" height="280" />
+  <text class="title" x="760" y="344">Task</text>
+  <text class="attr" x="760" y="370">task_id : string</text>
+  <text class="attr" x="760" y="390">name : string</text>
+  <text class="attr" x="760" y="410">duration_minutes : int</text>
+  <text class="attr" x="760" y="430">priority : Priority</text>
+  <text class="attr" x="760" y="450">assigned_pet_id : string</text>
+  <text class="attr" x="760" y="470">recurrence : Recurrence</text>
+
+  <text class="title" x="760" y="496">Methods</text>
+  <text class="method" x="760" y="516">+ schedule(start_time) : ScheduledSlot</text>
+  <text class="method" x="760" y="536">+ mark_completed(timestamp)</text>
+  <text class="method" x="760" y="556">+ conflicts_with(other)</text>
+
+  <!-- Relationships -->
+  <!-- Owner -> Pet (owns) -->
+  <line class="link" x1="250" y1="320" x2="250" y2="260" />
+  <text class="rel" x="258" y="295">owns</text>
+
+  <!-- Scheduler -> Owner (plans_for) -->
+  <line class="link" x1="740" y1="120" x2="460" y2="120" />
+  <text class="rel" x="560" y="112">plans_for</text>
+
+  <!-- Owner -> Task (creates) -->
+  <line class="link" x1="460" y1="200" x2="740" y2="360" />
+  <text class="rel" x="560" y="270">creates</text>
+
+  <!-- Pet -> Task (has) -->
+  <line class="link" x1="460" y1="440" x2="740" y2="440" />
+  <text class="rel" x="580" y="432">has</text>
+
+  <!-- Scheduler -> Task (schedules) -->
+  <line class="link" x1="950" y1="320" x2="950" y2="260" />
+  <text class="rel" x="958" y="295">schedules</text>
+
+</svg>

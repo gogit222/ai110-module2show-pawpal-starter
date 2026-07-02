@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PawPal+ Entities Class Diagram</title>
+  <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; padding: 24px; background: #fafafa; color: #222; }
+    h1 { font-size: 1.4rem; }
+    .mermaid { background: #fff; border: 1px solid #e2e2e2; border-radius: 8px; padding: 16px; overflow: auto; }
+  </style>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+  </script>
+</head>
+<body>
+  <h1>PawPal+ Entities &amp; Attributes — Class Diagram</h1>
+  <pre class="mermaid">
+classDiagram
+    %% Core classes
+    class Owner {
+        +string owner_id
+        +string name
+        +Contact contact
+        +Availability[] availability
+        +Preferences preferences
+        +string timezone
+        +Location location
+        +Contact emergency_contact
+        +string notes
+        +add_pet(pet Pet) void
+        +remove_pet(pet_id string) void
+        +update_availability(windows Availability[]) void
+        +get_pets() Pet[]
+        +get_upcoming_tasks(start datetime, end datetime) Task[]
+        +notify(message string) void
+        +update_preferences(prefs Preferences) void
+        +to_dict() dict
+        +from_dict(data dict) Owner
+    }
+
+    class Pet {
+        +string pet_id
+        +string name
+        +string species
+        +string breed
+        +date birthdate
+        +number weight_kg
+        +ActivityLevel activity_level
+        +string[] medical_conditions
+        +Medication[] medications
+        +Feeding[] feeding_schedule
+        +Grooming grooming_requirements
+        +Preferences preferences
+        +string microchip_id
+        +Task[] tasks
+        +add_task(task Task) void
+        +get_tasks() Task[]
+        +add_medication(med Medication) void
+        +remove_medication(med_name string) void
+        +update_feeding_schedule(schedule Feeding[]) void
+        +record_weight(weight_kg number, date date) void
+        +is_medication_due(now datetime) Medication[]
+        +needs_grooming() bool
+        +next_feeding_time(now datetime) datetime_or_null
+        +to_dict() dict
+        +from_dict(data dict) Pet
+    }
+
+    class Task {
+        +string task_id
+        +string name
+        +string description
+        +int duration_minutes
+        +Priority priority
+        +time earliest_start
+        +time latest_end
+        +Recurrence recurrence
+        +string assigned_pet_id
+        +bool requires_owner
+        +string[] requires_equipment
+        +bool is_optional
+        +timestamp last_completed
+        +string[] tags
+        +string estimated_energy_cost
+        +schedule(start_time datetime) ScheduledSlot
+        +reschedule(new_start datetime) ScheduledSlot
+        +mark_completed(timestamp datetime) void
+        +is_overdue(now datetime) bool
+        +conflicts_with(other Task) bool
+        +next_occurrence(after datetime) datetime_or_null
+        +estimate_end(start_time datetime) datetime
+        +to_dict() dict
+        +from_dict(data dict) Task
+    }
+
+    class Scheduler {
+        +Owner owner
+        +Task[] tasks
+        +Availability[] availability
+        +ScheduledSlot[] slots
+        +load_tasks_from_owner() Task[]
+        +add_task(task Task) void
+        +remove_task(task_id string) void
+        +prioritize() Task[]
+        +find_free_slot(task Task, day date) ScheduledSlot_or_null
+        +resolve_conflicts(slots ScheduledSlot[]) ScheduledSlot[]
+        +generate_plan(start datetime, end datetime) ScheduledSlot[]
+        +get_plan_for_day(day date) ScheduledSlot[]
+        +to_dict() dict
+        +from_dict(data dict) Scheduler
+    }
+
+    %% Supporting / value objects
+    class Contact {
+        +string email
+        +string phone
+    }
+    class Availability {
+        +string day
+        +time start
+        +time end
+    }
+    class Preferences {
+        +string[] walk_times
+        +bool feed_in_person
+    }
+    class Location {
+        +string address
+        +number lat
+        +number lng
+    }
+    class Medication {
+        +string name
+        +string dose
+        +time[] times
+    }
+    class Feeding {
+        +time time
+        +string portion
+    }
+    class Grooming {
+        +int brushing_per_week
+    }
+    class Recurrence {
+        +string freq
+        +string rule
+    }
+    class ScheduledSlot {
+        +string task_id
+        +datetime start_time
+        +datetime end_time
+    }
+
+    %% Enumerations
+    class Priority {
+        <<enumeration>>
+        HIGH
+        MEDIUM
+        LOW
+    }
+    class ActivityLevel {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    %% Relationships
+    Owner "1" o-- "0..*" Pet : owns
+    Pet "1" o-- "0..*" Task : has
+    Task "*" --> "1" Pet : assigned_to
+    Owner "1" --> "0..*" Task : creates
+    Owner *-- Contact
+    Owner *-- Availability
+    Owner *-- Preferences
+    Owner *-- Location
+    Pet *-- Medication
+    Pet *-- Feeding
+    Pet *-- Grooming
+    Pet --> ActivityLevel
+    Task --> Priority
+    Task *-- Recurrence
+    Task ..> ScheduledSlot : produces
+
+    %% Scheduler relationships
+    Scheduler "1" --> "1" Owner : plans_for
+    Scheduler "1" o-- "0..*" Task : schedules
+    Scheduler *-- Availability
+    Scheduler "1" o-- "0..*" ScheduledSlot : produces
+  </pre>
+</body>
+</html>
