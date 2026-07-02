@@ -127,13 +127,92 @@ Unchanged: correctness and performance. It's still O(n²) — combinations gener
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+*How did you use AI tools during this project?*
+
+I used AI across every phase: **design** (turning the scenario into a UML class
+diagram and identifying entities/value objects), **scaffolding** (generating the
+class skeletons with attributes and empty method stubs from the UML),
+**implementation** (writing the scheduling algorithms — sorting, filtering,
+conflict detection, and recurrence — one feature at a time), **debugging**
+(diagnosing the weekly-recurrence date bug and a Streamlit test-harness quirk),
+**refactoring** (simplifying `detect_conflicts()` for readability), and
+**documentation** (keeping the diagrams, README, and tests in sync with the
+code).
+
+*What kinds of prompts or questions were most helpful?*
+
+Small, specific, verifiable requests worked best — e.g. "add a `filter_tasks`
+method that filters by pet or completion status" or "update main.py to add two
+tasks at the same time and verify the warning prints." Asking the AI to **run
+the code and show the output** turned each step into something I could confirm
+rather than trust blindly. Open-ended "how could this be improved?" questions
+were useful for surfacing options (like the sweep-line optimization), as long as
+I made the final call.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+*Describe one moment where you did not accept an AI suggestion as-is.*
+
+The clearest case was the `spawn_next()` recurrence logic. The first version
+reused `next_occurrence()`, which for a **weekly** task completed before its
+time-of-day slot returned the *same day* instead of a week later. I caught this
+in the terminal output and had it rewritten to always advance exactly one period
+(+1 day for daily, +7 for weekly) from the completed date. I also declined the
+proposed sweep-line optimization for conflict detection to avoid unnecessary
+complexity at this scale.
+
+*How did you evaluate or verify what the AI suggested?*
+
+I relied on **running things, not reading things**: the `pytest` suite (9 tests
+covering sorting, recurrence, and conflict detection), `python main.py` for a
+full end-to-end trace, and boundary checks (e.g. confirming daily recurrence
+handled month-end, year-end, and leap-day correctly via `timedelta`). For the
+UML, I verified with a script that diffed the diagram's methods against the
+actual classes rather than eyeballing it.
+
+**c. Claude Code workflow**
+
+*Which Claude Code features were most effective for building your scheduler?*
+
+The tight **edit → run → verify loop** was the most valuable. After almost every
+change, the assistant ran `python main.py` and `python -m pytest` (and drove the
+Streamlit app headlessly with `AppTest`) and read the output, so bugs surfaced
+immediately instead of piling up. This caught real issues early — a weekly-
+recurrence date that resolved to the wrong day, a Windows console encoding
+problem with an em-dash, and a Streamlit `format_func` quirk in the test
+harness. **Multi-file consistency edits** were also effective: when the code
+changed, the same feature could be propagated to the tests, the four Mermaid
+diagram files, and the README in one pass, keeping the design and docs in sync.
+Finally, being able to **inspect the code programmatically** (e.g. using
+`inspect` to diff the diagram's methods against the actual classes) turned
+"does the UML still match?" into a verifiable check rather than a guess.
+
+*Give one example of an AI suggestion you rejected or modified to keep your
+system design clean.*
+
+When asked how `detect_conflicts()` could be improved, the AI offered a
+**sweep-line optimization** (sort by start time, stop scanning once tasks are
+past the current one's end) to drop it from O(n²) to roughly O(n log n). I
+**rejected that change** and kept the simpler `itertools.combinations` version,
+because for a household's handful of daily tasks the quadratic cost is
+irrelevant and the sweep-line adds real complexity — a classic premature
+optimization. I applied only the readability refactor. Separately, I **modified**
+an AI-written `spawn_next()` that reused `next_occurrence()`: for a weekly task
+completed before its time slot it produced the *same day* instead of next week,
+so I changed it to always advance exactly one period from the completed date.
+
+*How did using separate chat sessions for different phases help you stay
+organized?*
+
+Splitting the work into phase-scoped sessions — **design/UML, class skeletons,
+scheduling logic, testing, the Streamlit UI, and documentation** — kept each
+conversation focused on one concern. Each session started with a clear goal and
+a small, relevant slice of context, which made the assistant's suggestions more
+on-target and made it easy for me to review changes without wading through
+unrelated history. It also created natural checkpoints: I finished and verified
+one phase (e.g. all tests passing) before moving to the next, and I could return
+to an earlier phase — like resyncing the UML after the code grew — without
+losing the thread of the current work.
 
 ---
 
