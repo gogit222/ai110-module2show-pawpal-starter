@@ -56,19 +56,54 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 
 ## 🧪 Testing PawPal+
 
+Run the full test suite from the project root:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+Optionally, run with coverage:
+
+```bash
+python -m pytest --cov
+```
+
+**What the tests cover** (`tests/test_pawpal.py`, 9 tests):
+
+- **Task completion** — `mark_completed()` flips a task's status to done.
+- **Adding tasks** — `Pet.add_task()` increases the pet's task count.
+- **Recurrence** — completing a daily task spawns the next-day occurrence;
+  a non-recurring task spawns nothing.
+- **Sorting** — `Scheduler.sort_by_time()` returns tasks in chronological order.
+- **Conflict detection** — overlaps within one pet and across different pets,
+  duplicate (identical) start times, and the no-conflict "touching windows" edge case.
+- **Lightweight conflict warning** — `conflict_warning()` returns a message
+  (never raises) and an empty string when there are no conflicts.
+
+Terminal output of a successful run:
 
 ```
-# Paste your pytest output here
+$ python -m pytest
+============================= test session starts =============================
+platform win32 -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Claude_dev\ai110-module2show-pawpal-starter
+plugins: anyio-4.14.1
+collected 9 items
+
+tests\test_pawpal.py .........                                           [100%]
+
+============================== 9 passed in 0.03s ==============================
 ```
+
+### Confidence Level: ⭐⭐⭐⭐☆ (4 / 5)
+
+All 9 tests pass and cover the core scheduling logic — sorting, filtering,
+recurrence, and conflict detection — including edge cases like touching time
+windows and non-recurring tasks. Confidence is high but not maxed out because a
+few areas are still untested or unimplemented: owner availability
+(`find_free_slot`), serialization (`to_dict`/`from_dict`), overdue detection
+(`is_overdue`), and recurrence frequencies beyond daily/weekly. Adding tests
+for those would move this to 5 stars.
 
 ## 📐 Smarter Scheduling
 

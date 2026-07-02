@@ -181,6 +181,46 @@ def test_conflict_warning_is_lightweight_and_nonraising():
     assert "Walk" in msg and "Feed" in msg
 
 
+def test_sort_by_time_returns_chronological_order():
+    """sort_by_time returns tasks in chronological order regardless of insertion."""
+    # Added deliberately OUT of order: evening, morning, afternoon.
+    scheduler = Scheduler(
+        tasks=[
+            Task(task_id="t_pm", name="Evening Play", duration_minutes=20,
+                 earliest_start=time(19, 0), assigned_pet_id="p1"),
+            Task(task_id="t_am", name="Morning Walk", duration_minutes=30,
+                 earliest_start=time(7, 0), assigned_pet_id="p1"),
+            Task(task_id="t_noon", name="Afternoon Meds", duration_minutes=5,
+                 earliest_start=time(14, 30), assigned_pet_id="p1"),
+        ]
+    )
+
+    ordered = scheduler.sort_by_time()
+
+    assert [t.task_id for t in ordered] == ["t_am", "t_noon", "t_pm"]
+    # The start times are non-decreasing.
+    starts = [t.earliest_start for t in ordered]
+    assert starts == sorted(starts)
+
+
+def test_conflict_detection_flags_duplicate_times():
+    """Two tasks scheduled at the exact same time are flagged as a conflict."""
+    scheduler = Scheduler(
+        tasks=[
+            Task(task_id="walk", name="Walk", duration_minutes=30,
+                 earliest_start=time(8, 0), assigned_pet_id="p1"),
+            Task(task_id="meds", name="Meds", duration_minutes=10,
+                 earliest_start=time(8, 0), assigned_pet_id="p2"),  # same 08:00
+        ]
+    )
+
+    assert scheduler.has_conflicts() is True
+    conflicts = scheduler.detect_conflicts()
+    assert len(conflicts) == 1
+    ids = {conflicts[0].task_a.task_id, conflicts[0].task_b.task_id}
+    assert ids == {"walk", "meds"}
+
+
 if __name__ == "__main__":
     # Minimal runner so the file works even without pytest.
     failures = 0
