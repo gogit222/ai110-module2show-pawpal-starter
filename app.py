@@ -160,6 +160,11 @@ else:
     pets_by_id = {p.pet_id: p for p in pets}
     if not filtered:
         st.caption("No tasks match the current filter.")
+    else:
+        st.caption(f"{len(filtered)} task(s), sorted by time")
+        header = st.columns([1, 1, 3, 2, 1])
+        for col, label in zip(header, ["Done", "Time", "Task", "Pet", "Priority"]):
+            col.markdown(f"**{label}**")
     for t in filtered:
         c_done, c_time, c_name, c_pet, c_pri = st.columns([1, 1, 3, 2, 1])
         with c_done:
@@ -206,6 +211,8 @@ conflict_board.load_tasks_from_owner()
 warning = conflict_board.conflict_warning()
 if warning:
     st.warning(warning + "\n\n(These will be spread apart when you generate the plan.)")
+elif conflict_board.tasks:
+    st.success("No scheduling conflicts detected across the owner's pets.")
 
 if st.button("Generate schedule"):
     # Scheduler pulls every task across the owner's pets, then plans the day.
@@ -219,20 +226,22 @@ if st.button("Generate schedule"):
 
         tasks_by_id = {t.task_id: t for t in scheduler.tasks}
         pets_by_id = {p.pet_id: p for p in owner.get_pets()}
-        st.success(f"{len(plan)} task(s) scheduled for {today.isoformat()}")
+        st.success(f"✅ {len(plan)} task(s) scheduled for {today.isoformat()}")
         st.table(
             [
                 {
-                    "start": slot.start_time.strftime("%H:%M"),
-                    "end": slot.end_time.strftime("%H:%M"),
-                    "task": tasks_by_id[slot.task_id].name,
-                    "pet": (
+                    "Time": (
+                        f"{slot.start_time.strftime('%H:%M')}"
+                        f"–{slot.end_time.strftime('%H:%M')}"
+                    ),
+                    "Task": tasks_by_id[slot.task_id].name,
+                    "Pet": (
                         pets_by_id[tasks_by_id[slot.task_id].assigned_pet_id].name
                         if tasks_by_id[slot.task_id].assigned_pet_id in pets_by_id
                         else "?"
                     ),
-                    "priority": (
-                        tasks_by_id[slot.task_id].priority.value
+                    "Priority": (
+                        tasks_by_id[slot.task_id].priority.value.capitalize()
                         if tasks_by_id[slot.task_id].priority
                         else "-"
                     ),

@@ -87,9 +87,11 @@ classDiagram
         +schedule(start_time datetime) ScheduledSlot
         +reschedule(new_start datetime) ScheduledSlot
         +mark_completed(timestamp datetime) void
+        +is_completed() bool
         +is_overdue(now datetime) bool
         +conflicts_with(other Task) bool
         +next_occurrence(after datetime) datetime_or_null
+        +spawn_next(completed_at datetime) Task_or_null
         +estimate_end(start_time datetime) datetime
         +to_dict() dict
         +from_dict(data dict) Task
@@ -103,7 +105,13 @@ classDiagram
         +load_tasks_from_owner() Task[]
         +add_task(task Task) void
         +remove_task(task_id string) void
+        +sort_by_time() Task[]
         +prioritize() Task[]
+        +filter_tasks(completed bool, pet_name string) Task[]
+        +complete_task(task Task, timestamp datetime) Task_or_null
+        +detect_conflicts() Conflict[]
+        +has_conflicts() bool
+        +conflict_warning() string
         +find_free_slot(task Task, day date) ScheduledSlot_or_null
         +resolve_conflicts(slots ScheduledSlot[]) ScheduledSlot[]
         +generate_plan(start datetime, end datetime) ScheduledSlot[]
@@ -152,6 +160,11 @@ classDiagram
         +datetime start_time
         +datetime end_time
     }
+    class Conflict {
+        +Task task_a
+        +Task task_b
+        +bool same_pet
+    }
 
     %% Enumerations
     class Priority {
@@ -170,8 +183,7 @@ classDiagram
     %% Relationships
     Owner "1" o-- "0..*" Pet : owns
     Pet "1" o-- "0..*" Task : has
-    Task "*" --> "1" Pet : assigned_to
-    Owner "1" --> "0..*" Task : creates
+    Task "*" ..> "1" Pet : assigned_to (by id)
     Owner *-- Contact
     Owner *-- Availability
     Owner *-- Preferences
@@ -183,12 +195,16 @@ classDiagram
     Task --> Priority
     Task *-- Recurrence
     Task ..> ScheduledSlot : produces
+    Task ..> Task : spawns next (recurrence)
 
     %% Scheduler relationships
     Scheduler "1" --> "1" Owner : plans_for
     Scheduler "1" o-- "0..*" Task : schedules
+    Scheduler ..> Pet : reads / registers tasks
     Scheduler *-- Availability
     Scheduler "1" o-- "0..*" ScheduledSlot : produces
+    Scheduler ..> Conflict : detects
+    Conflict --> Task : references
   </pre>
 </body>
 </html>

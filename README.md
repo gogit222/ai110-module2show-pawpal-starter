@@ -22,6 +22,36 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## ✨ Features
+
+Implemented algorithms and behaviors (see the `Scheduler` and `Task` classes in
+[`pawpal_system.py`](pawpal_system.py)):
+
+- **Sorting by time** — tasks are ordered chronologically by their
+  `earliest_start`, with timeless tasks pushed to the end
+  (`Scheduler.sort_by_time()`).
+- **Filtering** — narrow tasks by completion status, by pet name
+  (case-insensitive), or both combined (`Scheduler.filter_tasks()`).
+- **Conflict detection** — finds overlapping tasks within a single pet and
+  across different pets, ignoring windows that merely touch
+  (`Scheduler.detect_conflicts()` / `Task.conflicts_with()`).
+- **Conflict warnings** — a lightweight, non-crashing warning message
+  (empty when clear) instead of raising an exception
+  (`Scheduler.conflict_warning()`).
+- **Conflict resolution** — overlapping tasks are automatically spread later
+  so the generated day plan never collides (`Scheduler.resolve_conflicts()`,
+  applied by `generate_plan()`).
+- **Daily & weekly recurrence** — completing a recurring task auto-creates the
+  next occurrence (daily = +1 day, weekly = +7 days, computed with
+  `timedelta`) (`Task.spawn_next()` via `Scheduler.complete_task()`).
+- **Daily plan generation** — aggregates every task across all of an owner's
+  pets and anchors each to its earliest start
+  (`Scheduler.load_tasks_from_owner()` + `get_plan_for_day()`).
+- **Completion tracking** — mark tasks done and query status
+  (`Task.mark_completed()` / `Task.is_completed()`).
+- **Multi-pet management** — add, select, and remove pets, each with its own
+  task list (`Owner.add_pet()` / `remove_pet()`, `Pet.add_task()`).
+
 ## Getting started
 
 ### Setup
@@ -159,25 +189,93 @@ Dates are computed with Python's `timedelta`, so month/year rollovers and leap
 years are handled accurately. Recurrence type is stored on `Task.recurrence`
 (a `Recurrence` with `freq`); non-recurring tasks spawn nothing.
 
-## 📸 Demo Walkthrough
+## 🎬 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+### Main UI features
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+Launch the app with `streamlit run app.py`. The single-page UI lets a user:
+
+- **Owner** — set the owner's name.
+- **Pets** — add a pet (name + species), pick the *active pet* from a dropdown,
+  or remove the selected pet. The owner can hold multiple pets, each with its
+  own task list.
+- **Tasks** — add a care task for the active pet with a title, duration,
+  priority, earliest start time, and an optional **Repeats** setting
+  (none / daily / weekly). Clear the active pet's tasks with one button.
+- **Task list** — a filterable, time-sorted table with a **Show**
+  (All / Pending / Completed) filter and a **Pet** filter. Each row has a
+  checkbox to mark the task complete (recurring tasks show a 🔁 tag).
+- **Build Schedule** — a live conflict banner plus a **Generate schedule**
+  button that produces the day's plan as a clean table.
+
+### Example workflow
+
+1. Enter the owner's name (e.g. *Jordan*).
+2. Add a pet — type "Biscuit", pick *dog*, click **Add pet**. Select it as the
+   active pet.
+3. Add tasks for Biscuit: "Morning Walk" at 07:00 (30 min, high), and an
+   "Evening Feed" at 18:00 set to **daily**.
+4. Watch them appear in the **Task list**, automatically sorted by time.
+5. Tick "Morning Walk" complete — it greys out; a recurring task would spawn
+   its next occurrence automatically.
+6. Add a second task at 07:00 to trigger the **conflict warning** banner.
+7. Click **Generate schedule** to see today's non-overlapping plan.
+
+### Key Scheduler behaviors shown
+
+- **Sorting by time** — the task list and schedule are always chronological,
+  regardless of the order tasks were added (`Scheduler.sort_by_time()`).
+- **Filtering** — the Show/Pet filters call `Scheduler.filter_tasks()`.
+- **Conflict warnings** — same-time tasks (within a pet or across pets) raise a
+  non-blocking warning (`Scheduler.conflict_warning()`), then are spread apart
+  in the generated plan (`resolve_conflicts()`).
+- **Daily recurrence** — completing a daily/weekly task auto-creates the next
+  occurrence (`Scheduler.complete_task()` → `Task.spawn_next()`).
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
 
+### Sample CLI output (`python main.py`)
 
-## 📸 Sample Output
+The `main.py` script exercises the same logic in the terminal — adding tasks
+out of order, sorting, filtering, spawning a recurring task, flagging a
+conflict, and printing today's schedule:
+
+```
+=== Tasks in INSERTION order (as added) ===
+  07:00  Morning Walk                 [done   ] (priority: high)
+  14:30  Afternoon Medication         [pending] (priority: high)
+  19:00  Evening Play / Enrichment    [pending] (priority: low)
+  08:00  Breakfast Feeding            [pending] (priority: medium)
+  07:00  Morning Medication           [pending] (priority: high)
+
+=== Tasks sorted by time (Scheduler.sort_by_time) ===
+  07:00  Morning Walk                 [done   ] (priority: high)
+  07:00  Morning Medication           [pending] (priority: high)
+  08:00  Breakfast Feeding            [pending] (priority: medium)
+  14:30  Afternoon Medication         [pending] (priority: high)
+  19:00  Evening Play / Enrichment    [pending] (priority: low)
+
+=== Filtering (Scheduler.filter_tasks) ===
+  pending only   (4): ['Afternoon Medication', 'Evening Play / Enrichment', 'Breakfast Feeding', 'Morning Medication']
+  completed only (1): ['Morning Walk']
+  Mochi's tasks  (3): ['Evening Play / Enrichment', 'Breakfast Feeding', 'Morning Medication']
+
+=== Recurrence: completing a task spawns the next occurrence ===
+  before complete: ['daily_walk']
+  completed 'daily_walk' -> spawned 'daily_walk#2026-07-03' (pending, starts 07:00)
+  after complete : ['daily_walk', 'daily_walk#2026-07-03']
+
+=== Conflict check (Scheduler.conflict_warning) ===
+  Warning: 1 scheduling conflict(s) detected:
+    - Morning Walk (07:00) overlaps Morning Medication (07:00) [different pets]
+  (program continues normally after the warning)
 
 === Today's Schedule - 2026-07-02 (Alex Morgan) ===
   07:00-07:30  Morning Walk                 [Biscuit]  (priority: high)
+  07:30-07:35  Morning Medication           [Mochi]  (priority: high)
   08:00-08:10  Breakfast Feeding            [Mochi]  (priority: medium)
   14:30-14:35  Afternoon Medication         [Biscuit]  (priority: high)
   19:00-19:20  Evening Play / Enrichment    [Mochi]  (priority: low)
 
-  4 task(s) scheduled.
+  5 task(s) scheduled.
+```
